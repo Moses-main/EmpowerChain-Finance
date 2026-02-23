@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node server/index.js",
+    "migrate": "node scripts/migrate.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -17,10 +19,14 @@
     "@tanstack/react-query": "^5.90.21",
     "@vitejs/plugin-react": "^5.0.2",
     "autoprefixer": "^10.4.19",
+    "cors": "^2.8.6",
     "date-fns": "^3.6.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
     "framer-motion": "^12.12.2",
     "globals": "^16.4.0",
     "lucide-react": "^0.462.0",
+    "pg": "^8.18.0",
     "postcss": "^8.4.49",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
