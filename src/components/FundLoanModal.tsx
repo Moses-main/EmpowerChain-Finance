@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
+import { useInvestments } from '../hooks/useLoans'
 import { Loader2, CheckCircle, X, DollarSign, TrendingUp } from 'lucide-react'
 
 interface FundLoanModalProps {
@@ -17,6 +18,7 @@ interface FundLoanModalProps {
 
 export function FundLoanModal({ loan, onClose, onSuccess }: FundLoanModalProps) {
   const { address, isConnected } = useAccount()
+  const { createInvestment } = useInvestments()
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -45,11 +47,21 @@ export function FundLoanModal({ loan, onClose, onSuccess }: FundLoanModalProps) 
 
     setLoading(true)
     
-    setTimeout(() => {
-      setLoading(false)
+    const result = await createInvestment({
+      loan_id: loan.id,
+      lender_address: address,
+      amount: parseFloat(amount),
+      interest_rate: loan.interestRate,
+    })
+
+    setLoading(false)
+    
+    if (result.success) {
       setSuccess(true)
       onSuccess?.()
-    }, 2000)
+    } else {
+      setError(result.error || 'Failed to process investment')
+    }
   }
 
   if (success) {
