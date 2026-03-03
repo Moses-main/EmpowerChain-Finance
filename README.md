@@ -1,73 +1,182 @@
-# React + TypeScript + Vite
+# EmpowerChain Finance
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A decentralized microfinance hub (P2P lending platform on blockchain) for entrepreneurs in low-income or underserved communities worldwide.
 
-Currently, two official plugins are available:
+![EmpowerChain Finance](https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&h=400&fit=crop)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Problem Statement
 
-## React Compiler
+Entrepreneurs in underserved communities face significant barriers to accessing capital:
+- Lack of traditional credit history
+- High fees and interest rates
+- Bias in traditional banking systems
+- Geographic limitations
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Solution
 
-## Expanding the ESLint configuration
+EmpowerChain Finance provides:
+- **Collateral-free microloans** on blockchain (Polygon)
+- **Transparent, on-chain transactions** with verifiable terms
+- **Financial literacy modules** with NFT badges that unlock better rates
+- **Global lender network** supporting entrepreneurs worldwide
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Features
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### For Borrowers
+- [x] Multi-step loan application with draft saving
+- [x] Wallet connection (MetaMask, injected wallets)
+- [x] Application status tracking
+- [x] Financial literacy modules with quizzes
+- [x] NFT badges that unlock lower interest rates
+- [x] Dashboard to manage loans
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### For Lenders
+- [x] Browse active loan opportunities
+- [x] Filter and sort loans by various criteria
+- [x] Fund loans directly from wallet
+- [x] Track investments portfolio
+- [x] View expected returns
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Technical
+- [x] Smart contracts (Solidity)
+- [x] React 19 + TypeScript frontend
+- [x] Express.js API server
+- [x] PostgreSQL database (Aiven)
+- [x] Wagmi for Web3 integration
+
+## Quick Start
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database (or use provided Aiven connection)
+- MetaMask wallet
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/Moses-main/EmpowerChain-Finance.git
+cd EmpowerChain-Finance
+
+# Install frontend dependencies
+npm install
+
+# Install smart contract dependencies
+cd contracts
+npm install
+cd ..
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Environment Setup
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# Copy environment file
+cp .env.example .env
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Edit .env with your database URL
+# DATABASE_URL=postgres://...
 ```
+
+### Running the Application
+
+```bash
+# Start the API server (in one terminal)
+npm run server
+
+# Start the frontend (in another terminal)
+npm run dev
+```
+
+The frontend will be available at `http://localhost:5173`
+
+### Deploying Smart Contracts
+
+```bash
+cd contracts
+
+# Compile contracts
+npm run compile
+
+# Deploy to local network
+npm run deploy:local
+
+# Deploy to Polygon Amoy testnet
+npm run deploy:amoy
+```
+
+## Project Structure
+
+```
+EmpowerChain-Finance/
+├── src/                    # React frontend
+│   ├── components/         # UI components
+│   ├── context/           # React context (wallet)
+│   ├── hooks/             # Custom hooks (useLoans)
+│   ├── pages/             # Page components
+│   └── lib/               # Utilities
+├── server/                # Express API server
+│   └── index.js           # API endpoints
+├── contracts/             # Solidity smart contracts
+│   ├── Loan.sol           # Loan management
+│   ├── Lending.sol        # Investment tracking
+│   └── LiteracyBadge.sol  # NFT badges
+└── supabase/              # Database migrations
+```
+
+## API Endpoints
+
+- `GET /api/loans` - List active loans
+- `POST /api/applications` - Submit loan application
+- `GET /api/applications?address=` - Get applications by address
+- `POST /api/investments` - Create investment
+- `GET /api/investments?address=` - Get investments by address
+- `GET /api/profile/:address` - Get user profile
+
+## Smart Contracts
+
+### Loan.sol
+Manages loan lifecycle:
+- Create loan applications
+- Approve/reject loans
+- Fund loans
+- Track repayments
+
+### Lending.sol
+Handles lender investments:
+- Track investments per loan
+- Calculate expected returns
+- Distribute repayments
+
+### LiteracyBadge.sol
+ERC-721 NFT badges:
+- Mint badges on module completion
+- Three tiers: Bronze, Silver, Gold
+- Score-based tier calculation
+
+## Technology Stack
+
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS
+- **Blockchain**: wagmi, viem, Polygon
+- **Backend**: Express.js, PostgreSQL
+- **Smart Contracts**: Solidity, Hardhat, OpenZeppelin
+
+## SDG Alignment
+
+This project aligns with:
+- **SDG 8**: Decent Work and Economic Growth
+- **SDG 10**: Reduced Inequalities
+- **SDG 17**: Partnerships for the Goals
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Contributing
+
+Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) first.
+
+## Acknowledgments
+
+- Built with [wagmi](https://wagmi.sh/) and [viem](https://viem.sh/)
+- Smart contracts use [OpenZeppelin](https://openzeppelin.com/) contracts
+- Database hosted on [Aiven](https://aiven.io/)
