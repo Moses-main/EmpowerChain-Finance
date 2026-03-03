@@ -11,9 +11,9 @@ async function main() {
   const loanAddress = await loan.getAddress();
   console.log(`   Loan deployed to: ${loanAddress}`);
 
-  // Deploy Lending Contract (mock USDC token address)
-  console.log("\n2. Deploying Lending Contract...");
-  const mockTokenAddress = "0x41E94Eb019C0762f9Bfdf9e1aB1C57D1bB4e5a6c"; // Replace with actual token
+  // Deploy Lending Contract (Celo testnet - use cUSD on Alfajores)
+  // cUSD on Alfajores: 0x874069Fa1Eb16D44d622F2e0Ca25eeB172369bC
+  const mockTokenAddress = "0x874069Fa1Eb16D44d622F2e0Ca25eeB172369bC"; // cUSD on Alfajores
   const Lending = await hre.ethers.getContractFactory("Lending");
   const lending = await Lending.deploy(mockTokenAddress);
   await lending.waitForDeployment();
