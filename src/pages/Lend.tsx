@@ -1,17 +1,60 @@
+import { useState } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import LoanCard from '../components/LoanCard'
 import { useLoans } from '../hooks/useLoans'
-import { TrendingUp, Shield, Globe, ArrowRight } from 'lucide-react'
+import { TrendingUp, Shield, Globe, ArrowRight, Search } from 'lucide-react'
+
+type SortOption = 'newest' | 'amount-high' | 'amount-low' | 'interest-high' | 'interest-low'
+type FilterOption = 'all' | 'active' | 'near-funding' | 'almost-funded'
 
 export default function Lend() {
   const { loans, loading, error } = useLoans()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<SortOption>('newest')
+  const [filterBy, setFilterBy] = useState<FilterOption>('all')
 
   const benefits = [
     { icon: TrendingUp, title: 'Competitive Returns', description: 'Earn 6-15% APY on your tokenized contributions. Higher returns than traditional savings.' },
     { icon: Shield, title: 'Secure & Transparent', description: 'Smart contracts ensure automatic repayments. On-chain audits provide full transparency.' },
     { icon: Globe, title: 'Global Impact', description: 'Support entrepreneurs worldwide while building wealth. Align investments with your values.' },
   ]
+
+  const filteredLoans = loans
+    .filter(loan => {
+      const matchesSearch = searchQuery === '' || 
+        loan.borrower_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        loan.business_type.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      if (!matchesSearch) return false
+
+      const funded = loan.funded_percentage || Math.round((Number(loan.funded_amount) / Number(loan.loan_amount)) * 100)
+      
+      switch (filterBy) {
+        case 'active':
+          return funded < 50
+        case 'near-funding':
+          return funded >= 50 && funded < 75
+        case 'almost-funded':
+          return funded >= 75 && funded < 100
+        default:
+          return true
+      }
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'amount-high':
+          return Number(b.loan_amount) - Number(a.loan_amount)
+        case 'amount-low':
+          return Number(a.loan_amount) - Number(b.loan_amount)
+        case 'interest-high':
+          return Number(b.interest_rate) - Number(a.interest_rate)
+        case 'interest-low':
+          return Number(a.interest_rate) - Number(b.interest_rate)
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      }
+    })
 
   return (
     <div className="min-h-screen bg-white">
@@ -56,6 +99,43 @@ export default function Lend() {
             <h2 className="text-xl md:text-2xl font-semibold text-[hsl(var(--foreground))] text-center mb-3 md:mb-4">Active loan opportunities</h2>
             <p className="text-center text-base mb-6 md:mb-8 max-w-2xl mx-auto" style={{ color: 'hsl(var(--muted))' }}>Browse and fund loans from verified entrepreneurs. Each loan is backed by smart contracts and transparent terms.</p>
 
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'hsl(var(--muted))' }} />
+                <input
+                  type="text"
+                  placeholder="Search by name or business..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border text-sm"
+                  style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
+                />
+              </div>
+              <select
+                value={filterBy}
+                onChange={(e) => setFilterBy(e.target.value as FilterOption)}
+                className="px-4 py-2 rounded-lg border text-sm"
+                style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
+              >
+                <option value="all">All Loans</option>
+                <option value="active">Just Started (&lt;50%)</option>
+                <option value="near-funding">Near Funding (50-75%)</option>
+                <option value="almost-funded">Almost Funded (75-99%)</option>
+              </select>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="px-4 py-2 rounded-lg border text-sm"
+                style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
+              >
+                <option value="newest">Newest First</option>
+                <option value="amount-high">Amount: High to Low</option>
+                <option value="amount-low">Amount: Low to High</option>
+                <option value="interest-high">Interest: High to Low</option>
+                <option value="interest-low">Interest: Low to High</option>
+              </select>
+            </div>
+
             {loading ? (
               <div className="text-center py-12">
                 <div className="animate-spin w-8 h-8 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full mx-auto" />
@@ -65,13 +145,13 @@ export default function Lend() {
               <div className="text-center py-12" style={{ color: 'hsl(var(--muted))' }}>
                 <p>Failed to load loans. Please try again.</p>
               </div>
-            ) : loans.length === 0 ? (
+            ) : filteredLoans.length === 0 ? (
               <div className="text-center py-12" style={{ color: 'hsl(var(--muted))' }}>
-                <p>No active loans available at the moment.</p>
+                <p>No loans match your search criteria.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {loans.map((loan) => (
+                {filteredLoans.map((loan) => (
                   <LoanCard
                     key={loan.id}
                     id={loan.id}
