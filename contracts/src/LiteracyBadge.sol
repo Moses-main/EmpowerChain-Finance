@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.25;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -51,6 +51,32 @@ contract LiteracyBadge is ERC721, ERC721URIStorage, Ownable, ReentrancyGuard {
         require(score >= 0 && score <= 100, "Invalid score");
         require(!hasCompletedModule[recipient][moduleId], "Module already completed");
 
+        _mintBadgeInternal(recipient, moduleId, score);
+
+        return _nextTokenId - 1;
+    }
+
+    function batchMintBadges(
+        address[] calldata recipients,
+        string[] calldata moduleIds,
+        uint256[] calldata scores
+    ) external onlyOwner nonReentrant {
+        require(
+            recipients.length == moduleIds.length && 
+            recipients.length == scores.length,
+            "Array length mismatch"
+        );
+
+        for (uint256 i = 0; i < recipients.length; i++) {
+            _mintBadgeInternal(recipients[i], moduleIds[i], scores[i]);
+        }
+    }
+
+    function _mintBadgeInternal(
+        address recipient,
+        string memory moduleId,
+        uint256 score
+    ) internal {
         BadgeTier tier = _calculateTier(score);
         
         uint256 tokenId = _nextTokenId++;
@@ -72,24 +98,6 @@ contract LiteracyBadge is ERC721, ERC721URIStorage, Ownable, ReentrancyGuard {
         hasCompletedModule[recipient][moduleId] = true;
 
         emit BadgeMinted(tokenId, recipient, moduleId, tier, score);
-
-        return tokenId;
-    }
-
-    function batchMintBadges(
-        address[] calldata recipients,
-        string[] calldata moduleIds,
-        uint256[] calldata scores
-    ) external onlyOwner nonReentrant {
-        require(
-            recipients.length == moduleIds.length && 
-            recipients.length == scores.length,
-            "Array length mismatch"
-        );
-
-        for (uint256 i = 0; i < recipients.length; i++) {
-            mintBadge(recipients[i], moduleIds[i], scores[i]);
-        }
     }
 
     function upgradeBadgeTier(uint256 tokenId, uint256 newScore) external onlyOwner {
