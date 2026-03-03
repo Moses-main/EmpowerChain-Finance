@@ -15,9 +15,11 @@ interface LiteracyModuleProps {
   description: string;
   questions: Question[];
   nftBadge: string;
+  tier?: string;
+  onComplete?: (moduleId: string, score: number, passed: boolean) => void;
 }
 
-const LiteracyModule: React.FC<LiteracyModuleProps> = ({ title, description, questions, nftBadge }) => {
+const LiteracyModule: React.FC<LiteracyModuleProps> = ({ moduleId, title, description, questions, nftBadge, onComplete }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [completed, setCompleted] = useState(false);
@@ -36,6 +38,11 @@ const LiteracyModule: React.FC<LiteracyModuleProps> = ({ title, description, que
         setSelectedAnswer(null);
       } else {
         setCompleted(true);
+        if (onComplete) {
+          const passPercentage = (score / questions.length) * 100;
+          const isPassed = passPercentage >= 70;
+          onComplete(moduleId, Math.round(passPercentage), isPassed);
+        }
       }
     }, 900);
   };
