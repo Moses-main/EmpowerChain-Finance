@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { useAccount } from 'wagmi'
@@ -8,40 +8,35 @@ import ApiStatusNotice from '../components/ApiStatusNotice'
 
 export default function Dashboard() {
   const { address, isConnected } = useAccount()
-  const { investments, error: investmentsError, fetchInvestments } = useInvestments()
-  const { applications, error: applicationsError, fetchMyApplications } = useLoanApplications()
+  const { data: investments, error: investmentsError, isLoading: investmentsLoading } = useInvestments(address)
+  const { data: applications, error: applicationsError, isLoading: applicationsLoading } = useLoanApplications(address)
   const [activeTab, setActiveTab] = useState<'loans' | 'investments'>('loans')
-
-  useEffect(() => {
-    if (address) {
-      fetchMyApplications(address)
-      fetchInvestments(address)
-    }
-  }, [address, fetchMyApplications, fetchInvestments])
 
   const borrowerLoans = applications || []
   const lenderInvestments = investments || []
 
   // Calculate stats
   const totalBorrowed = borrowerLoans
-    .filter((a: any) => a.status === 'approved' || a.status === 'funded')
-    .reduce((sum: number, a: any) => sum + Number(a.loan_amount), 0)
+    .filter((a) => a.status === 'approved')
+    .reduce((sum, a) => sum + Number(a.loan_amount), 0)
 
   const totalInvested = lenderInvestments
-    .reduce((sum: number, i: any) => sum + Number(i.amount), 0)
+    .reduce((sum, i) => sum + Number(i.amount), 0)
 
   const totalEarned = lenderInvestments
-    .filter((i: any) => i.status === 'repaid')
-    .reduce((sum: number, i: any) => sum + Number(i.expected_return - i.amount), 0)
+    .filter((i) => i.status === 'repaid')
+    .reduce((sum, i) => sum + Number(i.expected_return - i.amount), 0)
 
   const stats = isConnected ? [
-    { label: 'Active Loans', value: borrowerLoans.filter((a: any) => a.status === 'pending').length, icon: Wallet, color: '#10b981' },
+    { label: 'Active Loans', value: borrowerLoans.filter((a) => a.status === 'pending').length, icon: Wallet, color: '#10b981' },
     { label: 'Total Borrowed', value: `$${totalBorrowed.toLocaleString()}`, icon: TrendingUp, color: '#4f46e5' },
     { label: 'Total Invested', value: `$${totalInvested.toLocaleString()}`, icon: DollarSign, color: '#8b5cf6' },
     { label: 'Earnings', value: `$${totalEarned.toLocaleString()}`, icon: BarChart3, color: '#10b981' },
   ] : [
     { label: 'Connect wallet to view stats', value: '--', icon: Wallet, color: '#6b7280' },
   ]
+
+  const isLoading = applicationsLoading || investmentsLoading
 
   return (
     <div className="min-h-screen bg-white">
@@ -84,36 +79,44 @@ export default function Dashboard() {
               {(applicationsError || investmentsError) && (
                 <ApiStatusNotice
                   type="error"
-                  message={applicationsError || investmentsError || 'Unable to load dashboard data right now.'}
+                  message={applicationsError?.message || investmentsError?.message || 'Unable to load dashboard data right now.'}
                 />
               )}
 
+              {isLoading && (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                </div>
+              )}
+
               {/* Tabs */}
-              <div className="flex gap-2 mb-6">
-                <button
-                  onClick={() => setActiveTab('loans')}
-                  className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-                  style={{
-                    backgroundColor: activeTab === 'loans' ? 'hsl(var(--primary))' : 'hsl(var(--secondary))',
-                    color: activeTab === 'loans' ? 'white' : 'hsl(var(--foreground))',
-                  }}
-                >
-                  My Loans
-                </button>
-                <button
-                  onClick={() => setActiveTab('investments')}
-                  className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-                  style={{
-                    backgroundColor: activeTab === 'investments' ? 'hsl(var(--primary))' : 'hsl(var(--secondary))',
-                    color: activeTab === 'investments' ? 'white' : 'hsl(var(--foreground))',
-                  }}
-                >
-                  My Investments
-                </button>
-              </div>
+              {!isLoading && (
+                <div className="flex gap-2 mb-6">
+                  <button
+                    onClick={() => setActiveTab('loans')}
+                    className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                    style={{
+                      backgroundColor: activeTab === 'loans' ? 'hsl(var(--primary))' : 'hsl(var(--secondary))',
+                      color: activeTab === 'loans' ? 'white' : 'hsl(var(--foreground))',
+                    }}
+                  >
+                    My Loans
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('investments')}
+                    className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                    style={{
+                      backgroundColor: activeTab === 'investments' ? 'hsl(var(--primary))' : 'hsl(var(--secondary))',
+                      color: activeTab === 'investments' ? 'white' : 'hsl(var(--foreground))',
+                    }}
+                  >
+                    My Investments
+                  </button>
+                </div>
+              )}
 
               {/* Loans Tab */}
-              {activeTab === 'loans' && (
+              {activeTab === 'loans' && !isLoading && (
                 <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
                   <div className="p-4 md:p-6 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
                     <h2 className="text-lg md:text-xl font-semibold text-[hsl(var(--foreground))]">My Loan Applications</h2>
@@ -138,7 +141,7 @@ export default function Dashboard() {
                           </tr>
                         </thead>
                         <tbody>
-                          {borrowerLoans.map((app: any) => (
+                          {borrowerLoans.map((app) => (
                             <tr key={app.id} className="border-t" style={{ borderColor: 'hsl(var(--border))' }}>
                               <td className="px-4 md:px-6 py-3 text-sm font-medium text-[hsl(var(--foreground))]">
                                 ${Number(app.loan_amount).toLocaleString()}
@@ -158,7 +161,7 @@ export default function Dashboard() {
                                 </span>
                               </td>
                               <td className="px-4 md:px-6 py-3 text-sm" style={{ color: 'hsl(var(--muted))' }}>
-                                {new Date(app.created_at).toLocaleDateString()}
+                                {app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
                               </td>
                             </tr>
                           ))}
@@ -170,7 +173,7 @@ export default function Dashboard() {
               )}
 
               {/* Investments Tab */}
-              {activeTab === 'investments' && (
+              {activeTab === 'investments' && !isLoading && (
                 <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
                   <div className="p-4 md:p-6 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
                     <h2 className="text-lg md:text-xl font-semibold text-[hsl(var(--foreground))]">My Investments</h2>
@@ -195,7 +198,7 @@ export default function Dashboard() {
                           </tr>
                         </thead>
                         <tbody>
-                          {lenderInvestments.map((inv: any) => (
+                          {lenderInvestments.map((inv) => (
                             <tr key={inv.id} className="border-t" style={{ borderColor: 'hsl(var(--border))' }}>
                               <td className="px-4 md:px-6 py-3 text-sm font-medium text-[hsl(var(--foreground))]">
                                 ${Number(inv.amount).toLocaleString()}
