@@ -76,6 +76,7 @@ cp .env.example .env
 # Edit .env with your database URL
 # DATABASE_URL=postgres://...
 # DB_SSL_MODE=disable   # use "require" or "verify-full" in hosted/prod environments
+# VITE_ENABLE_MOCK_LOANS=true   # development-only fallback mock loans for /lend
 ```
 
 ### Running the Application
