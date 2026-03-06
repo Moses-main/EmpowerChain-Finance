@@ -5,6 +5,7 @@ import LiteracyModule from '../components/LiteracyModeule';
 import { ArrowLeft, Trophy, BookOpen, Star } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 const STORAGE_KEY = 'empowerchain_completed_modules'
@@ -36,6 +37,7 @@ async function fetchMintBadge(data: { wallet_address: string; module_id: string;
 }
 
 export default function Learn() {
+  const { t } = useTranslation()
   const { address } = useAccount()
   const queryClient = useQueryClient()
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
@@ -299,8 +301,8 @@ export default function Learn() {
         <section className="section">
           <div className="container-narrow">
             <div className="rounded-xl p-6 md:p-8 border text-center" style={{ backgroundColor: 'hsl(var(--secondary))', borderColor: 'hsl(var(--border))' }}>
-              <h1 className="text-2xl md:text-3xl font-semibold text-[hsl(var(--foreground))] mb-2">Financial literacy hub</h1>
-              <p className="text-base" style={{ color: 'hsl(var(--muted))' }}>Master practical finance skills and earn NFT badges that unlock better loan rates.</p>
+              <h1 className="text-2xl md:text-3xl font-semibold text-[hsl(var(--foreground))] mb-2">{t('learn.title')}</h1>
+              <p className="text-base" style={{ color: 'hsl(var(--muted))' }}>{t('learn.subtitle')}</p>
             </div>
           </div>
         </section>
@@ -314,7 +316,7 @@ export default function Learn() {
                 style={{ color: 'hsl(var(--primary))' }}
               >
                 <ArrowLeft className="w-4 h-4" />
-                Back to modules
+                {t('common.back')}
               </button>
               <LiteracyModule 
                 moduleId={selectedModule} 

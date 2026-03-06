@@ -38,17 +38,20 @@ EmpowerChain Finance provides:
 - [x] View expected returns
 
 ### Technical
-- [x] Smart contracts (Solidity)
+- [x] Smart contracts (Solidity) with Foundry
 - [x] React 19 + TypeScript frontend
 - [x] Express.js API server
 - [x] PostgreSQL database (Aiven)
 - [x] Wagmi for Web3 integration
+- [x] Multi-language support (English, Spanish, French)
+- [x] Accessibility (ARIA, Keyboard nav)
 
 ## Quick Start
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL database (or use provided Aiven connection)
+- Foundry (forge, cast, anvil)
+- PostgreSQL database
 - MetaMask wallet
 
 ### Installation
@@ -61,9 +64,9 @@ cd EmpowerChain-Finance
 # Install frontend dependencies
 npm install
 
-# Install smart contract dependencies
+# Install smart contract dependencies (Foundry)
 cd contracts
-npm install
+forge install
 cd ..
 ```
 
@@ -73,11 +76,10 @@ cd ..
 # Copy environment file
 cp .env.example .env
 
-# Edit .env with your database URL
+# Edit .env with your database URL and Private Key
 # DATABASE_URL=postgres://...
-# DB_SSL_MODE=disable   # use "require" or "verify-full" in hosted/prod environments
-# VITE_ENABLE_MOCK_LOANS=true   # development-only fallback mock loans for /lend
-# VITE_WALLETCONNECT_PROJECT_ID=...  # optional, enables WalletConnect connector
+# PRIVATE_KEY=0x...
+# RPC_URL=https://polygon-amoy...
 ```
 
 ### Running the Application
@@ -92,19 +94,19 @@ npm run dev
 
 The frontend will be available at `http://localhost:5173`
 
-### Deploying Smart Contracts
+### Smart Contract Workflows (Foundry)
 
 ```bash
 cd contracts
 
-# Compile contracts
-npm run compile
+# Build contracts
+forge build
 
-# Deploy to local network
-npm run deploy:local
+# Run unit tests
+forge test
 
-# Deploy to Polygon Amoy testnet
-npm run deploy:amoy
+# Deploy simulation
+forge script script/Deploy.s.sol
 ```
 
 ## Project Structure
@@ -113,48 +115,46 @@ npm run deploy:amoy
 EmpowerChain-Finance/
 ├── src/                    # React frontend
 │   ├── components/         # UI components
-│   ├── context/           # React context (wallet)
-│   ├── hooks/             # Custom hooks (useLoans)
+│   ├── context/           # React context (wallet, auth)
+│   ├── hooks/             # Custom hooks (useLoans, useStats)
+│   ├── i18n/              # Translation resources
 │   ├── pages/             # Page components
 │   └── lib/               # Utilities
 ├── server/                # Express API server
-│   └── index.js           # API endpoints
-├── contracts/             # Solidity smart contracts
-│   ├── Loan.sol           # Loan management
-│   ├── Lending.sol        # Investment tracking
-│   └── LiteracyBadge.sol  # NFT badges
-└── supabase/              # Database migrations
+│   └── index.js           # API endpoints & NFT minter
+├── contracts/             # Foundry smart contract project
+│   ├── src/               # Solidity contracts (Lending, Loan, LiteracyBadge)
+│   ├── test/             # Solidity unit tests
+│   ├── script/           # Deployment scripts
+│   └── foundry.toml      # Foundry configuration
+└── tests/                 # Playwright E2E tests
 ```
 
 ## API Endpoints
 
+### Loans & Stats
 - `GET /api/loans` - List active loans
+- `GET /api/stats` - Platform-wide impact metrics
 - `POST /api/applications` - Submit loan application
 - `GET /api/applications?address=` - Get applications by address
+
+### Investments
 - `POST /api/investments` - Create investment
 - `GET /api/investments?address=` - Get investments by address
-- `GET /api/profile/:address` - Get user profile
+
+### Educational Modules
+- `POST /api/quiz-progress` - Save module completion
+- `POST /api/mint-badge` - Gassless NFT badge minting (Server-side)
 
 ## Smart Contracts
 
-### Loan.sol
-Manages loan lifecycle:
-- Create loan applications
-- Approve/reject loans
-- Fund loans
-- Track repayments
-
-### Lending.sol
-Handles lender investments:
-- Track investments per loan
-- Calculate expected returns
-- Distribute repayments
-
 ### LiteracyBadge.sol
-ERC-721 NFT badges:
-- Mint badges on module completion
-- Three tiers: Bronze, Silver, Gold
-- Score-based tier calculation
+ERC-721 NFT badges issued to borrowers upon completing educational modules. 
+- **Utility**: Holders earn up to 15% discount on loan interest rates.
+- **Tiers**: Bronze, Silver, Gold based on quiz performance.
+
+### Loan.sol & Lending.sol
+Core P2P lending engine. Handles loan request lifecycle and lender yield distribution.
 
 ## Technology Stack
 
