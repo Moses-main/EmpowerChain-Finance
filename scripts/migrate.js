@@ -108,6 +108,21 @@ async function migrate() {
     `);
     console.log('✅ completed_modules table created');
 
+    // Create quiz_progress table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS quiz_progress (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        wallet_address VARCHAR(66) NOT NULL,
+        module_id VARCHAR(100) NOT NULL,
+        score INTEGER NOT NULL,
+        completed BOOLEAN DEFAULT false,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(wallet_address, module_id)
+      );
+    `);
+    console.log('✅ quiz_progress table created');
+
     // Create indexes
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_loan_applications_status ON loan_applications(status);
