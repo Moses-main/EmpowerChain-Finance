@@ -3,6 +3,7 @@ import { Menu, X, Wallet, ChevronDown, AlertTriangle } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi'
 import { polygon, polygonAmoy } from 'wagmi/chains'
+import LanguageSwitcher from './LanguageSwitcher'
 
 const SUPPORTED_CHAIN_IDS = [polygon.id, polygonAmoy.id]
 const RECOMMENDED_CHAIN_ID = polygonAmoy.id
@@ -67,7 +68,8 @@ const Header = () => {
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2">
+            <LanguageSwitcher />
             {isConnected && address ? (
               <div className="relative">
                 <button

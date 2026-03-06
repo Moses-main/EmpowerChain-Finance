@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { WalletProvider } from './context/WalletContext'
+import './i18n'
 import './index.css'
 import './style.css'
 import App from './App.tsx'
