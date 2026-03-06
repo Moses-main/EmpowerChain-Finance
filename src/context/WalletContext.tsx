@@ -1,5 +1,5 @@
-import { WagmiProvider, createConfig, http } from 'wagmi'
-import { injected, coinbaseWallet, walletConnect } from 'wagmi/connectors'
+import { WagmiProvider, createConfig, http, injected } from 'wagmi'
+import { coinbaseWallet, walletConnect } from 'wagmi/connectors'
 import { mainnet, polygon, polygonAmoy } from 'wagmi/chains'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
@@ -51,7 +51,7 @@ function WalletInner({ children }: { children: ReactNode }) {
 
   const recommendedChainId = polygonAmoy.id
   const supportedChainIds = useMemo(() => config.chains.map((chain) => chain.id), [])
-  const isSupportedNetwork = !chainId || supportedChainIds.includes(chainId)
+  const isSupportedNetwork = !chainId || supportedChainIds.includes(chainId as number)
 
   const handleConnect = () => {
     const connector = availableConnectors.find((c) => c.type === 'injected') || availableConnectors[0]
@@ -61,7 +61,7 @@ function WalletInner({ children }: { children: ReactNode }) {
   }
 
   const handleSwitchNetwork = (targetChainId: number) => {
-    switchChain({ chainId: targetChainId })
+    switchChain({ chainId: targetChainId as 1 | 137 | 80002 })
   }
 
   return (
