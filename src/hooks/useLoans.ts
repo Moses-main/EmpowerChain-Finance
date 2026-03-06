@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 const ALLOW_MOCK_LOANS = import.meta.env.DEV && import.meta.env.VITE_ENABLE_MOCK_LOANS === 'true'
+const POLLING_INTERVAL = 30000 // 30 seconds
 
 export interface Loan {
   id: string
@@ -99,138 +100,129 @@ const mockLoans: Loan[] = [
   { id: '3', borrower_address: '0x976EA74026E726554dB657fA54763abd0C3a0aa9', borrower_name: 'Fatima Hassan', business_type: 'Digital Services', loan_amount: 2000, interest_rate: 6, description: 'Building a tech consulting firm', funded_amount: 900, funded_percentage: 45, status: 'active', created_at: new Date().toISOString() },
 ]
 
-export function useLoans() {
-  const [loans, setLoans] = useState<Loan[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isUsingMockData, setIsUsingMockData] = useState(false)
-
-  const fetchLoans = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-
-    const response = await fetchAPI<Loan[]>('/api/loans')
-
-    if (response.ok && Array.isArray(response.data)) {
-      setLoans(response.data)
-      setIsUsingMockData(false)
-      setLoading(false)
-      return
-    }
-
-    if (ALLOW_MOCK_LOANS) {
-      setLoans(mockLoans)
-      setIsUsingMockData(true)
-      setError(response.message || 'Using mock data because API is unavailable')
-      setLoading(false)
-      return
-    }
-
-    setLoans([])
-    setIsUsingMockData(false)
-    setError(response.message || 'Failed to load loans')
-    setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    fetchLoans()
-  }, [fetchLoans])
-
-  return {
-    loans,
-    loading,
-    error,
-    isUsingMockData,
-    refetch: fetchLoans,
+async function fetchLoans(): Promise<Loan[]> {
+  const response = await fetchAPI<Loan[]>('/api/loans')
+  
+  if (response.ok && Array.isArray(response.data)) {
+    return response.data
   }
+  
+  if (ALLOW_MOCK_LOANS) {
+    return mockLoans
+  }
+  
+  throw new Error(response.message || 'Failed to load loans')
 }
 
-export function useLoanApplications() {
-  const [applications, setApplications] = useState<LoanApplication[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export function useLoans() {
+  return useQuery({
+    queryKey: ['loans'],
+    queryFn: fetchLoans,
+    refetchInterval: POLLING_INTERVAL,
+    staleTime: POLLING_INTERVAL / 2,
+  })
+}
 
-  const submitApplication = async (application: Omit<LoanApplication, 'id' | 'created_at' | 'status'>) => {
-    try {
-      setLoading(true)
-      setError(null)
+export function useLoan(id: string) {
+  return useQuery({
+    queryKey: ['loan', id],
+    queryFn: async () => {
+      const response = await fetchAPI<Loan>(`/api/loans/${id}`)
+      if (response.ok && response.data) {
+        return response.data
+      }
+      throw new Error(response.message || 'Loan not found')
+    },
+    refetchInterval: POLLING_INTERVAL,
+    enabled: !!id,
+  })
+}
+
+export function useLoanApplications(address?: string) {
+  return useQuery({
+    queryKey: ['applications', address],
+    queryFn: async () => {
+      if (!address) return []
+      const response = await fetchAPI<LoanApplication[]>(`/api/applications?address=${address}`)
+      if (response.ok && Array.isArray(response.data)) {
+        return response.data
+      }
+      return []
+    },
+    refetchInterval: POLLING_INTERVAL,
+    enabled: !!address,
+  })
+}
+
+export function useSubmitApplication() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async (application: Omit<LoanApplication, 'id' | 'created_at' | 'status'>) => {
       const response = await fetchAPI<LoanApplication>('/api/applications', {
         method: 'POST',
         body: JSON.stringify(application),
       })
-
-      if (response.ok && response.data) {
-        return { success: true, data: response.data }
+      
+      if (!response.ok || !response.data) {
+        throw new Error(response.message || 'Failed to submit application')
       }
-
-      setError(response.message || 'Failed to submit application')
-      return { success: false, error: response.message || 'Failed to submit application' }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchMyApplications = useCallback(async (address: string) => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await fetchAPI<LoanApplication[]>(`/api/applications?address=${address}`)
-      if (response.ok && response.data) {
-        setApplications(response.data)
-        return
-      }
-
-      setApplications([])
-      setError(response.message || 'Failed to fetch applications')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  return { applications, loading, error, submitApplication, fetchMyApplications }
+      
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] })
+    },
+  })
 }
 
-export function useInvestments() {
-  const [investments, setInvestments] = useState<Investment[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export function useInvestments(address?: string) {
+  return useQuery({
+    queryKey: ['investments', address],
+    queryFn: async () => {
+      if (!address) return []
+      const response = await fetchAPI<Investment[]>(`/api/investments?address=${address}`)
+      if (response.ok && Array.isArray(response.data)) {
+        return response.data
+      }
+      return []
+    },
+    refetchInterval: POLLING_INTERVAL,
+    enabled: !!address,
+  })
+}
 
-  const createInvestment = async (investment: { loan_id: string; lender_address: string; amount: number; interest_rate: number }) => {
-    try {
-      setLoading(true)
-      setError(null)
+export function useCreateInvestment() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async (investment: { loan_id: string; lender_address: string; amount: number; interest_rate: number }) => {
       const response = await fetchAPI<Investment>('/api/investments', {
         method: 'POST',
         body: JSON.stringify(investment),
       })
-
-      if (response.ok && response.data) {
-        return { success: true, data: response.data }
+      
+      if (!response.ok || !response.data) {
+        throw new Error(response.message || 'Failed to create investment')
       }
+      
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['investments'] })
+      queryClient.invalidateQueries({ queryKey: ['loans'] })
+    },
+  })
+}
 
-      setError(response.message || 'Failed to create investment')
-      return { success: false, error: response.message || 'Failed to create investment' }
-    } finally {
-      setLoading(false)
-    }
+// Hook for manual refetch
+export function useRefreshLoans() {
+  const queryClient = useQueryClient()
+  
+  return {
+    refresh: () => queryClient.invalidateQueries({ queryKey: ['loans'] }),
+    refreshLoan: (id: string) => queryClient.invalidateQueries({ queryKey: ['loan', id] }),
+    refreshApplications: (address?: string) => queryClient.invalidateQueries({ queryKey: ['applications', address] }),
+    refreshInvestments: (address?: string) => queryClient.invalidateQueries({ queryKey: ['investments', address] }),
   }
-
-  const fetchInvestments = useCallback(async (address: string) => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await fetchAPI<Investment[]>(`/api/investments?address=${address}`)
-      if (response.ok && response.data) {
-        setInvestments(response.data)
-        return
-      }
-
-      setInvestments([])
-      setError(response.message || 'Failed to fetch investments')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  return { investments, loading, error, createInvestment, fetchInvestments }
 }
