@@ -255,6 +255,50 @@ app.post('/api/profile', validate(profileSchema), async (req, res) => {
 })
 
 const PORT = process.env.PORT || 3001
+
+// Quiz progress endpoints
+const quizProgressSchema = z.object({
+  wallet_address: z.string().regex(ADDRESS_REGEX),
+  module_id: z.string().min(1),
+  score: z.number().min(0).max(100),
+  completed: z.boolean(),
+})
+
+// Save quiz progress
+app.post('/api/quiz-progress', validate(quizProgressSchema), async (req, res) => {
+  const { wallet_address, module_id, score, completed } = req.body
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO quiz_progress (wallet_address, module_id, score, completed)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (wallet_address, module_id) DO UPDATE SET score = $3, completed = $4, updated_at = NOW()
+       RETURNING *`,
+      [wallet_address, module_id, score, completed]
+    )
+    return res.json(result.rows[0])
+  } catch (err) {
+    console.error(err)
+    return sendError(res, 500, 'DATABASE_ERROR', 'Failed to save quiz progress')
+  }
+})
+
+// Get quiz progress for a user
+app.get('/api/quiz-progress', validate(queryAddressSchema, 'query'), async (req, res) => {
+  const { address } = req.query
+
+  try {
+    const result = await pool.query(
+      'SELECT * FROM quiz_progress WHERE wallet_address = $1 ORDER BY updated_at DESC',
+      [address]
+    )
+    return res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    return sendError(res, 500, 'DATABASE_ERROR', 'Failed to fetch quiz progress')
+  }
+})
+
 app.listen(PORT, () => {
   console.log(`API server running on port ${PORT}`)
 })

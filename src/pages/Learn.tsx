@@ -3,14 +3,49 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import LiteracyModule from '../components/LiteracyModeule';
 import { ArrowLeft, Trophy, BookOpen, Star } from 'lucide-react';
+import { useAccount } from 'wagmi';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 const STORAGE_KEY = 'empowerchain_completed_modules'
 
+async function fetchQuizProgress(address: string) {
+  const response = await fetch(`${API_URL}/api/quiz-progress?address=${address}`)
+  if (!response.ok) return []
+  return response.json()
+}
+
+async function saveQuizProgress(data: { wallet_address: string; module_id: string; score: number; completed: boolean }) {
+  const response = await fetch(`${API_URL}/api/quiz-progress`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) throw new Error('Failed to save progress')
+  return response.json()
+}
+
 export default function Learn() {
+  const { address } = useAccount()
+  const queryClient = useQueryClient()
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [completedModules, setCompletedModules] = useState<string[]>([]);
   const [moduleScores, setModuleScores] = useState<Record<string, number>>({});
 
+  const { data: quizProgress } = useQuery({
+    queryKey: ['quiz-progress', address],
+    queryFn: () => fetchQuizProgress(address || ''),
+    enabled: !!address,
+  })
+
+  const saveProgressMutation = useMutation({
+    mutationFn: saveQuizProgress,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quiz-progress', address] })
+    },
+  })
+
+  // Load from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
@@ -24,15 +59,49 @@ export default function Learn() {
     }
   }, [])
 
+  // Sync from database when loaded
+  useEffect(() => {
+    if (quizProgress && quizProgress.length > 0) {
+      const dbCompleted = quizProgress.filter((p: any) => p.completed).map((p: any) => p.module_id)
+      const dbScores: Record<string, number> = {}
+      quizProgress.forEach((p: any) => {
+        dbScores[p.module_id] = p.score
+      })
+      
+      // Merge: use DB data if available
+      if (dbCompleted.length > 0) {
+        setCompletedModules(dbCompleted)
+        setModuleScores(dbScores)
+        // Update localStorage with DB data
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          completed: dbCompleted,
+          scores: dbScores,
+        }))
+      }
+    }
+  }, [quizProgress])
+
   const handleModuleComplete = (moduleId: string, score: number, passed: boolean) => {
     if (passed && !completedModules.includes(moduleId)) {
       const updated = [...completedModules, moduleId]
       setCompletedModules(updated)
       setModuleScores(prev => ({ ...prev, [moduleId]: score }))
+      
+      // Save to localStorage
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         completed: updated,
         scores: { ...moduleScores, [moduleId]: score }
       }))
+
+      // Save to database if wallet connected
+      if (address) {
+        saveProgressMutation.mutate({
+          wallet_address: address,
+          module_id: moduleId,
+          score,
+          completed: passed,
+        })
+      }
     }
   }
 
