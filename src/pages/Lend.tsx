@@ -4,12 +4,13 @@ import Footer from '../components/Footer'
 import LoanCard from '../components/LoanCard'
 import { useLoans } from '../hooks/useLoans'
 import { TrendingUp, Shield, Globe, ArrowRight, Search } from 'lucide-react'
+import ApiStatusNotice from '../components/ApiStatusNotice'
 
 type SortOption = 'newest' | 'amount-high' | 'amount-low' | 'interest-high' | 'interest-low'
 type FilterOption = 'all' | 'active' | 'near-funding' | 'almost-funded'
 
 export default function Lend() {
-  const { loans, loading, error } = useLoans()
+  const { loans, loading, error, isUsingMockData } = useLoans()
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('newest')
   const [filterBy, setFilterBy] = useState<FilterOption>('all')
@@ -99,6 +100,17 @@ export default function Lend() {
             <h2 className="text-xl md:text-2xl font-semibold text-[hsl(var(--foreground))] text-center mb-3 md:mb-4">Active loan opportunities</h2>
             <p className="text-center text-base mb-6 md:mb-8 max-w-2xl mx-auto" style={{ color: 'hsl(var(--muted))' }}>Browse and fund loans from verified entrepreneurs. Each loan is backed by smart contracts and transparent terms.</p>
 
+
+            {isUsingMockData && (
+              <ApiStatusNotice
+                type="warning"
+                message="Showing development mock loans because the API is currently unavailable."
+              />
+            )}
+
+            {error && !isUsingMockData && (
+              <ApiStatusNotice type="error" message={error} />
+            )}
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'hsl(var(--muted))' }} />
@@ -141,9 +153,9 @@ export default function Lend() {
                 <div className="animate-spin w-8 h-8 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full mx-auto" />
                 <p className="mt-4" style={{ color: 'hsl(var(--muted))' }}>Loading loans...</p>
               </div>
-            ) : error ? (
+) : error && !isUsingMockData ? (
               <div className="text-center py-12" style={{ color: 'hsl(var(--muted))' }}>
-                <p>Failed to load loans. Please try again.</p>
+                <p>Unable to load loan opportunities right now.</p>
               </div>
             ) : filteredLoans.length === 0 ? (
               <div className="text-center py-12" style={{ color: 'hsl(var(--muted))' }}>

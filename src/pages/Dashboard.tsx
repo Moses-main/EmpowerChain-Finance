@@ -4,11 +4,12 @@ import Footer from '../components/Footer'
 import { useAccount } from 'wagmi'
 import { useInvestments, useLoanApplications } from '../hooks/useLoans'
 import { Wallet, TrendingUp, DollarSign, BarChart3 } from 'lucide-react'
+import ApiStatusNotice from '../components/ApiStatusNotice'
 
 export default function Dashboard() {
   const { address, isConnected } = useAccount()
-  const { investments, fetchInvestments } = useInvestments()
-  const { applications, fetchMyApplications } = useLoanApplications()
+  const { investments, error: investmentsError, fetchInvestments } = useInvestments()
+  const { applications, error: applicationsError, fetchMyApplications } = useLoanApplications()
   const [activeTab, setActiveTab] = useState<'loans' | 'investments'>('loans')
 
   useEffect(() => {
@@ -77,8 +78,16 @@ export default function Dashboard() {
             })}
           </div>
 
+
           {isConnected ? (
             <>
+              {(applicationsError || investmentsError) && (
+                <ApiStatusNotice
+                  type="error"
+                  message={applicationsError || investmentsError || 'Unable to load dashboard data right now.'}
+                />
+              )}
+
               {/* Tabs */}
               <div className="flex gap-2 mb-6">
                 <button
