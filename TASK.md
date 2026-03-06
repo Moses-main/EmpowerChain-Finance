@@ -172,6 +172,15 @@ Decentralized microfinance hub (P2P lending platform on blockchain) for entrepre
   - Alt text for images
   - Caption support for videos
 
+  ### Task 6.3: change the package of the smart contract to foundry
+- **Priority**: HIGH
+- **Description**: change the package of the smart contract to foundry
+- **Files**: `contracts/`
+- **Status**: PENDING
+
+- **Features**:
+  - deploy the smart contracts using foundry
+  - test contracts on the testnet network and ensure it passes all tests
 ---
 
 ## Phase 7: Testing & Documentation

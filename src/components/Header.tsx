@@ -3,12 +3,14 @@ import { Menu, X, Wallet, ChevronDown, AlertTriangle } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi'
 import { polygon, polygonAmoy } from 'wagmi/chains'
+import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
 
 const SUPPORTED_CHAIN_IDS = [polygon.id, polygonAmoy.id]
 const RECOMMENDED_CHAIN_ID = polygonAmoy.id
 
 const Header = () => {
+  const { t } = useTranslation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showWalletMenu, setShowWalletMenu] = useState(false)
   const location = useLocation()
@@ -21,11 +23,11 @@ const Header = () => {
   const isWrongNetwork = Boolean(isConnected && chainId && !SUPPORTED_CHAIN_IDS.includes(chainId))
 
   const navLinks = [
-    { label: 'Home', path: '/' },
-    { label: 'Borrow', path: '/borrow' },
-    { label: 'Lend', path: '/lend' },
-    { label: 'Learn', path: '/learn' },
-    { label: 'Dashboard', path: '/dashboard' },
+    { label: t('nav.home'), path: '/' },
+    { label: t('nav.borrow'), path: '/borrow' },
+    { label: t('nav.lend'), path: '/lend' },
+    { label: t('nav.learn'), path: '/learn' },
+    { label: t('nav.dashboard'), path: '/dashboard' },
   ]
 
   const formatAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`
@@ -90,7 +92,7 @@ const Header = () => {
                         className="w-full px-4 py-2 text-sm text-left transition-colors"
                         style={{ color: 'hsl(var(--primary))' }}
                       >
-                        {isSwitchingNetwork ? 'Switching network...' : 'Switch to Polygon Amoy'}
+                        {isSwitchingNetwork ? t('nav.switching') : t('nav.switch_to_amoy')}
                       </button>
                     )}
                     <button
@@ -98,7 +100,7 @@ const Header = () => {
                       className="w-full px-4 py-2 text-sm text-left hover:bg-opacity-50"
                       style={{ color: 'hsl(var(--foreground))' }}
                     >
-                      Disconnect
+                      {t('nav.disconnect')}
                     </button>
                   </div>
                 )}
@@ -111,7 +113,7 @@ const Header = () => {
                   style={{ backgroundColor: 'hsl(var(--primary))' }}
                   disabled={isPending}
                 >
-                  {isPending ? 'Connecting...' : 'Connect Wallet'}
+                  {isPending ? t('nav.connecting') : t('nav.connect_wallet')}
                 </button>
                 {showWalletMenu && (
                   <div className="absolute right-0 mt-2 w-56 rounded-lg border shadow-lg py-1" style={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
@@ -148,7 +150,7 @@ const Header = () => {
           <div className="container-wide py-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div className="flex items-center gap-2 text-sm" style={{ color: '#9a3412' }}>
               <AlertTriangle className="w-4 h-4" />
-              <span>Wrong network detected. Please switch to Polygon Amoy for full app functionality.</span>
+              <span>{t('nav.wrong_network')}</span>
             </div>
             <button
               onClick={handleSwitchToRecommendedChain}
@@ -156,7 +158,7 @@ const Header = () => {
               className="px-3 py-1.5 rounded-md text-sm font-medium text-white w-fit"
               style={{ backgroundColor: 'hsl(var(--primary))' }}
             >
-              {isSwitchingNetwork ? 'Switching...' : 'Switch network'}
+              {isSwitchingNetwork ? t('nav.switching') : t('nav.switch_network')}
             </button>
           </div>
         </div>
@@ -186,7 +188,7 @@ const Header = () => {
                   className="w-full px-4 py-3 text-sm font-medium rounded-lg border"
                   style={{ borderColor: 'hsl(var(--border))' }}
                 >
-                  Disconnect ({formatAddress(address)})
+                  {t('nav.disconnect')} ({formatAddress(address)})
                 </button>
               ) : (
                 <button
@@ -194,7 +196,7 @@ const Header = () => {
                   className="w-full px-4 py-3 text-sm font-medium rounded-lg text-white"
                   style={{ backgroundColor: 'hsl(var(--primary))' }}
                 >
-                  Connect Wallet
+                  {t('nav.connect_wallet')}
                 </button>
               )}
             </div>

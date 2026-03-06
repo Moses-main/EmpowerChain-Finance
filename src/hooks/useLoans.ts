@@ -42,6 +42,12 @@ export interface Investment {
   created_at: string
 }
 
+export interface PlatformStats {
+  active_loans_count: string
+  total_borrowed: string
+  total_invested: string
+}
+
 interface FetchApiResult<T = unknown> {
   ok: boolean
   status: number
@@ -212,6 +218,24 @@ export function useCreateInvestment() {
       queryClient.invalidateQueries({ queryKey: ['investments'] })
       queryClient.invalidateQueries({ queryKey: ['loans'] })
     },
+  })
+}
+
+export function useStats() {
+  return useQuery({
+    queryKey: ['stats'],
+    queryFn: async () => {
+      const response = await fetchAPI<PlatformStats>('/api/stats')
+      if (response.ok && response.data) {
+        return response.data
+      }
+      return {
+        active_loans_count: '0',
+        total_borrowed: '0',
+        total_invested: '0',
+      }
+    },
+    refetchInterval: POLLING_INTERVAL,
   })
 }
 

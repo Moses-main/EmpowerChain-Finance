@@ -1,7 +1,9 @@
 import { ArrowRight, TrendingUp, Shield, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const HeroSection = () => {
+  const { t } = useTranslation();
   return (
     <section className="section bg-white">
       <div className="container-wide">
@@ -9,17 +11,17 @@ const HeroSection = () => {
           <div className="lg:col-span-7">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6" style={{ backgroundColor: 'hsl(var(--secondary))' }}>
               <Globe className="w-3.5 h-3.5" style={{ color: 'hsl(var(--primary))' }} />
-              <span className="text-sm" style={{ color: 'hsl(var(--muted))' }}>Decentralized microfinance on Polygon</span>
+              <span className="text-sm" style={{ color: 'hsl(var(--muted))' }}>{t('home.hero.badge')}</span>
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-[hsl(var(--foreground))] leading-tight tracking-tight mb-6">
-              Fair loans for{' '}
-              <span style={{ color: 'hsl(var(--primary))' }}>underserved</span>{' '}
-              entrepreneurs
+              {t('home.hero.title_part1')}{' '}
+              <span style={{ color: 'hsl(var(--primary))' }}>{t('home.hero.title_highlight')}</span>{' '}
+              {t('home.hero.title_part2')}
             </h1>
 
             <p className="text-lg md:text-xl" style={{ color: 'hsl(var(--muted))', maxWidth: '560px', lineHeight: '1.6', marginBottom: '2rem' }}>
-              Access collateral-free microloans with transparent terms, low fees, and community-driven approvals. Built on-chain for trustless, verifiable financing.
+              {t('home.hero.desc')}
             </p>
 
             <div className="flex flex-wrap gap-3 mb-8">
@@ -29,7 +31,7 @@ const HeroSection = () => {
                 style={{ backgroundColor: 'hsl(var(--primary))' }}
               >
                 <span className="flex items-center gap-2">
-                  Get Started
+                  {t('home.hero.get_started')}
                   <ArrowRight className="w-4 h-4" />
                 </span>
               </Link>
@@ -38,7 +40,7 @@ const HeroSection = () => {
                 className="px-5 py-3 text-sm font-medium rounded-lg border transition-all duration-200"
                 style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--foreground))' }}
               >
-                View Opportunities
+                {t('home.hero.view_opportunities')}
               </Link>
             </div>
 
@@ -55,12 +57,12 @@ const HeroSection = () => {
                     <span className="text-xs font-medium" style={{ color: '#d97706' }}>EF</span>
                   </div>
                 </div>
-                <span className="text-sm" style={{ color: 'hsl(var(--muted))' }}>12K+ users</span>
+                <span className="text-sm" style={{ color: 'hsl(var(--muted))' }}>{t('home.hero.stats_users')}</span>
               </div>
               <div className="hidden sm:block h-8 w-px" style={{ backgroundColor: 'hsl(var(--border))' }} />
               <div className="flex items-center gap-2 text-sm" style={{ color: 'hsl(var(--muted))' }}>
                 <TrendingUp className="w-4 h-4" style={{ color: '#10b981' }} />
-                <span>$2.5M+ disbursed</span>
+                <span>{t('home.hero.stats_disbursed')}</span>
               </div>
             </div>
           </div>
@@ -69,10 +71,10 @@ const HeroSection = () => {
             <div className="rounded-2xl p-6 md:p-8 border" style={{ backgroundColor: 'hsl(var(--secondary))', borderColor: 'hsl(var(--border))', boxShadow: 'var(--shadow-md)' }}>
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <p className="text-sm" style={{ color: 'hsl(var(--muted))' }}>Average business growth</p>
+                  <p className="text-sm" style={{ color: 'hsl(var(--muted))' }}>{t('home.hero.growth_title')}</p>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-3xl md:text-4xl font-semibold text-[hsl(var(--foreground))]">+87%</span>
-                    <span className="text-sm font-medium" style={{ color: '#10b981' }}>revenue</span>
+                    <span className="text-sm font-medium" style={{ color: '#10b981' }}>{t('home.hero.growth_revenue')}</span>
                   </div>
                 </div>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#e0e7ff' }}>
@@ -100,8 +102,8 @@ const HeroSection = () => {
                     <Shield className="w-4 h-4" style={{ color: '#059669' }} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[hsl(var(--foreground))]">Smart contract secured</p>
-                    <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted))' }}>All transactions verified on Polygon</p>
+                    <p className="text-sm font-medium text-[hsl(var(--foreground))]">{t('home.hero.smart_contract_title')}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted))' }}>{t('home.hero.smart_contract_desc')}</p>
                   </div>
                 </div>
               </div>

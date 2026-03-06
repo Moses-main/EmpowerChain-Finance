@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useAccount } from 'wagmi'
-import { useLoanApplications } from '../hooks/useLoans'
-import { CheckCircle, Loader2, ArrowRight, ArrowLeft, DollarSign, Users, Building, Save } from 'lucide-react'
+import { useAccount, useReadContract } from 'wagmi'
+import { useSubmitApplication } from '../hooks/useLoans'
+import { CheckCircle, Loader2, ArrowRight, ArrowLeft, DollarSign, Users, Building, Save, TrendingDown } from 'lucide-react'
 
 const businessTypes = [
   'Retail / E-commerce',
@@ -33,7 +33,43 @@ const STORAGE_KEY = 'empowerchain_loan_draft'
 
 export function LoanApplicationForm({ onSuccess }: LoanApplicationFormProps) {
   const { address, isConnected } = useAccount()
-  const { submitApplication, loading } = useLoanApplications()
+  const { mutateAsync: submitApplication, isPending: loading } = useSubmitApplication()
+  
+  // Dummy contract address for now, usually would be an env var
+  const LITERACY_BADGE_ADDRESS = import.meta.env.VITE_LITERACY_BADGE_ADDRESS || '0x0000000000000000000000000000000000000000'
+  const { data: userTiers } = useReadContract({
+    address: LITERACY_BADGE_ADDRESS as `0x${string}`,
+    abi: [{
+      "inputs": [{ "internalType": "address", "name": "user", "type": "address" }],
+      "name": "getUserTiers",
+      "outputs": [{ "internalType": "uint256[]", "name": "", "type": "uint256[]" }],
+      "stateMutability": "view",
+      "type": "function"
+    }],
+    functionName: 'getUserTiers',
+    args: address ? [address as `0x${string}`] : undefined,
+    query: {
+      enabled: !!address && isConnected,
+    }
+  })
+
+  // Calculate highest tier (0 = Bronze, 1 = Silver, 2 = Gold)
+  const highestTier = Array.isArray(userTiers) && userTiers.length > 0 
+    ? Math.max(...(userTiers as number[]).map(Number)) 
+    : -1
+
+  // Base rate 15%, Bronze (0) = 10%, Silver (1) = 5%, Gold (2) = 0%
+  const calculateInterestRate = (tier: number) => {
+    switch(tier) {
+      case 2: return 0;
+      case 1: return 5;
+      case 0: return 10;
+      default: return 15;
+    }
+  }
+
+  const effectiveInterestRate = calculateInterestRate(highestTier)
+
   const [currentStep, setCurrentStep] = useState(0)
   const [formData, setFormData] = useState<FormData>({
     borrower_name: '',
@@ -124,22 +160,22 @@ export function LoanApplicationForm({ onSuccess }: LoanApplicationFormProps) {
       return
     }
 
-    const result = await submitApplication({
-      borrower_address: address,
-      borrower_name: formData.borrower_name,
-      email: formData.email,
-      business_type: formData.business_type,
-      loan_amount: parseFloat(formData.loan_amount),
-      loan_purpose: formData.loan_purpose,
-      business_description: formData.business_description,
-    })
+    try {
+      await submitApplication({
+        borrower_address: address,
+        borrower_name: formData.borrower_name,
+        email: formData.email,
+        business_type: formData.business_type,
+        loan_amount: parseFloat(formData.loan_amount),
+        loan_purpose: formData.loan_purpose,
+        business_description: formData.business_description,
+      })
 
-    if (result.success) {
       localStorage.removeItem(STORAGE_KEY)
       setSubmitted(true)
       onSuccess?.()
-    } else {
-      setError(result.error || 'Failed to submit application')
+    } catch (err: any) {
+      setError(err.message || 'Failed to submit application')
     }
   }
 
@@ -312,6 +348,22 @@ export function LoanApplicationForm({ onSuccess }: LoanApplicationFormProps) {
                 style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
                 placeholder="Inventory, equipment, working capital..."
               />
+            </div>
+          </div>
+        )}
+
+        {currentStep === 2 && (
+          <div className="mt-6 p-4 rounded-lg flex items-start gap-4" style={{ backgroundColor: highestTier >= 0 ? '#eff6ff' : 'hsl(var(--secondary))' }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: highestTier >= 0 ? '#bfdbfe' : 'hsl(var(--card))' }}>
+              <TrendingDown className="w-5 h-5" style={{ color: highestTier >= 0 ? '#1d4ed8' : 'hsl(var(--muted))' }} />
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-[hsl(var(--foreground))]">Your Effective Interest Rate: <span className="text-lg font-bold" style={{ color: 'hsl(var(--primary))' }}>{effectiveInterestRate}%</span></h4>
+              <p className="text-xs mt-1" style={{ color: 'hsl(var(--muted))', lineHeight: '1.5' }}>
+                {highestTier >= 0 
+                  ? `Congratulations! As a ${highestTier === 2 ? 'Gold' : highestTier === 1 ? 'Silver' : 'Bronze'} tier badge holder, you've earned a discount on your base 15% rate.`
+                  : "Base interest rate is 15%. Complete Financial Literacy Modules in the Learn tab to mint NFT badges and lower your rate!"}
+              </p>
             </div>
           </div>
         )}

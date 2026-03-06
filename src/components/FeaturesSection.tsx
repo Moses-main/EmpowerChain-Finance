@@ -1,48 +1,51 @@
 import { Shield, Zap, Users, BookOpen, TrendingUp, Lock } from 'lucide-react';
-
-const features = [
-  {
-    icon: Shield,
-    title: 'Collateral-Free',
-    description: 'Access loans without traditional collateral. Blockchain reputation replaces outdated barriers.',
-  },
-  {
-    icon: Zap,
-    title: 'Low Gas Fees',
-    description: 'Polygon-powered settlements keep transaction costs minimal and transfers fast.',
-  },
-  {
-    icon: Users,
-    title: 'P2P Marketplace',
-    description: 'Direct connections between borrowers and lenders. No intermediaries, better rates.',
-  },
-  {
-    icon: BookOpen,
-    title: 'Learn & Earn',
-    description: 'Complete education modules to earn NFT badges and unlock better loan terms.',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Yield Generation',
-    description: 'Lenders earn competitive returns while funding real entrepreneurs.',
-  },
-  {
-    icon: Lock,
-    title: 'On-Chain Security',
-    description: 'Smart contracts ensure transparent, verifiable, and tamper-proof transactions.',
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 const FeaturesSection = () => {
+  const { t } = useTranslation();
+
+  const features = [
+    {
+      icon: Shield,
+      title: t('home.features.collateral_free.title'),
+      description: t('home.features.collateral_free.desc'),
+    },
+    {
+      icon: Zap,
+      title: t('home.features.low_gas.title'),
+      description: t('home.features.low_gas.desc'),
+    },
+    {
+      icon: Users,
+      title: t('home.features.p2p.title'),
+      description: t('home.features.p2p.desc'),
+    },
+    {
+      icon: BookOpen,
+      title: t('home.features.learn_earn.title'),
+      description: t('home.features.learn_earn.desc'),
+    },
+    {
+      icon: TrendingUp,
+      title: t('home.features.yield.title'),
+      description: t('home.features.yield.desc'),
+    },
+    {
+      icon: Lock,
+      title: t('home.features.security.title'),
+      description: t('home.features.security.desc'),
+    },
+  ];
+
   return (
     <section className="section" style={{ backgroundColor: 'hsl(var(--secondary))' }}>
       <div className="container-wide">
         <div className="max-w-2xl mx-auto text-center mb-12 md:mb-16">
           <h2 className="text-3xl md:text-4xl font-semibold text-[hsl(var(--foreground))] tracking-tight mb-4">
-            Everything you need to participate
+            {t('home.features.title')}
           </h2>
           <p className="text-lg" style={{ color: 'hsl(var(--muted))', lineHeight: '1.6' }}>
-            A developer-minded platform focused on transparency, fairness, and real-world impact.
+            {t('home.features.subtitle')}
           </p>
         </div>
 

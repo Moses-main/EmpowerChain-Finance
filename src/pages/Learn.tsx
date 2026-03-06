@@ -25,6 +25,16 @@ async function saveQuizProgress(data: { wallet_address: string; module_id: strin
   return response.json()
 }
 
+async function fetchMintBadge(data: { wallet_address: string; module_id: string; score: number }) {
+  const response = await fetch(`${API_URL}/api/mint-badge`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) throw new Error('Failed to mint badge')
+  return response.json()
+}
+
 export default function Learn() {
   const { address } = useAccount()
   const queryClient = useQueryClient()
@@ -81,6 +91,17 @@ export default function Learn() {
     }
   }, [quizProgress])
 
+  const mintBadgeMutation = useMutation({
+    mutationFn: fetchMintBadge,
+    onSuccess: (data) => {
+      console.log('NFT badge minted successfully!', data.transactionHash)
+      // Optional: Add a UI toast notification here
+    },
+    onError: (error) => {
+      console.error('Failed to mint NFT badge:', error)
+    }
+  })
+
   const handleModuleComplete = (moduleId: string, score: number, passed: boolean) => {
     if (passed && !completedModules.includes(moduleId)) {
       const updated = [...completedModules, moduleId]
@@ -100,6 +121,13 @@ export default function Learn() {
           module_id: moduleId,
           score,
           completed: passed,
+        })
+        
+        // Trigger NFT Minting
+        mintBadgeMutation.mutate({
+          wallet_address: address,
+          module_id: moduleId,
+          score,
         })
       }
     }

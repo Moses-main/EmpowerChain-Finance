@@ -19,6 +19,7 @@ function getSslConfig() {
     return false
   }
 
+  // Handle self signed certs appropriately by turning off rejectUnauthorized
   return {
     rejectUnauthorized: sslMode === 'verify-full',
   }
@@ -153,6 +154,22 @@ app.get('/api/applications', validate(queryAddressSchema, 'query'), async (req, 
   }
 })
 
+// Get aggregate stats
+app.get('/api/stats', async (_req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        (SELECT COUNT(*) FROM loans WHERE status = 'active' OR status = 'funded') as active_loans_count,
+        (SELECT COALESCE(SUM(loan_amount), 0) FROM loans WHERE status = 'active' OR status = 'funded') as total_borrowed,
+        (SELECT COALESCE(SUM(amount), 0) FROM investments WHERE status = 'active') as total_invested
+    `)
+    return res.json(result.rows[0])
+  } catch (err) {
+    console.error(err)
+    return sendError(res, 500, 'DATABASE_ERROR', 'Failed to fetch overall stats')
+  }
+})
+
 // Create investment
 app.post('/api/investments', validate(investmentSchema), async (req, res) => {
   const { loan_id, lender_address, amount, interest_rate } = req.body
@@ -254,7 +271,23 @@ app.post('/api/profile', validate(profileSchema), async (req, res) => {
   }
 })
 
+import { ethers } from 'ethers'
+
 const PORT = process.env.PORT || 3001
+
+const LITERACY_BADGE_ADDRESS = process.env.LITERACY_BADGE_ADDRESS || '0x0000000000000000000000000000000000000000'
+const PRIVATE_KEY = process.env.PRIVATE_KEY || '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+const RPC_URL = process.env.RPC_URL || 'http://127.0.0.1:8545'
+
+const badgeAbi = [
+  "function mintBadge(address recipient, string memory moduleId, uint256 score) external returns (uint256)",
+  "function hasCompleted(address user, string memory moduleId) external view returns (bool)",
+  "function upgradeBadgeTier(uint256 tokenId, uint256 newScore) external"
+]
+
+const provider = new ethers.JsonRpcProvider(RPC_URL)
+const wallet = new ethers.Wallet(PRIVATE_KEY, provider)
+const literacyBadgeContract = new ethers.Contract(LITERACY_BADGE_ADDRESS, badgeAbi, wallet)
 
 // Quiz progress endpoints
 const quizProgressSchema = z.object({
@@ -296,6 +329,36 @@ app.get('/api/quiz-progress', validate(queryAddressSchema, 'query'), async (req,
   } catch (err) {
     console.error(err)
     return sendError(res, 500, 'DATABASE_ERROR', 'Failed to fetch quiz progress')
+  }
+})
+
+const badgeMintSchema = z.object({
+  wallet_address: z.string().regex(ADDRESS_REGEX),
+  module_id: z.string().min(1),
+  score: z.number().min(0).max(100)
+})
+
+app.post('/api/mint-badge', validate(badgeMintSchema), async (req, res) => {
+  const { wallet_address, module_id, score } = req.body
+
+  if (LITERACY_BADGE_ADDRESS === '0x0000000000000000000000000000000000000000') {
+     return sendError(res, 400, 'CONFIG_ERROR', 'Literacy badge smart contract address not configured')
+  }
+
+  try {
+    const hasCompleted = await literacyBadgeContract.hasCompleted(wallet_address, module_id)
+    if (hasCompleted) {
+      // Logic for an upgrade token path would go here, currently returning success
+      return res.json({ success: true, message: 'Badge already minted for module.' })
+    }
+
+    const tx = await literacyBadgeContract.mintBadge(wallet_address, module_id, score)
+    await tx.wait()
+
+    return res.json({ success: true, transactionHash: tx.hash })
+  } catch (error) {
+    console.error('Failed to mint badge:', error)
+    return sendError(res, 500, 'MINTING_ERROR', 'Failed to issue NFT badge to user')
   }
 })
 

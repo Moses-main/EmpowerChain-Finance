@@ -27,3 +27,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Build Artifacts
+contracts/out
+contracts/cache
+typechain-types
+artifacts
+cache
+build

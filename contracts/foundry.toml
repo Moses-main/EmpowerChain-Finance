@@ -1,14 +1,17 @@
 [profile.default]
 src = "src"
 out = "out"
-libs = ["node_modules"]
+libs = ["node_modules", "lib"]
 solc_version = "0.8.25"
 via_ir = true
 optimizer = true
 optimizer_runs = 200
+fs_permissions = [
+  { access = "read", path = ".." }
+]
 
 [rpc_endpoints]
-celoAlfajores = "${CELO_ALFAJORES_URL}"
+polygonAmoy = "${RPC_URL}"
 
 [etherscan]
-11142220 = { key = "${CELOSCAN_API_KEY}", url = "https://api-sepolia.celoscan.io/api" }
+polygonAmoy = { key = "${ETHERSCAN_API_KEY}" }
