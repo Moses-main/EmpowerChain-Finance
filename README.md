@@ -170,16 +170,76 @@ This project aligns with:
 - **SDG 10**: Reduced Inequalities
 - **SDG 17**: Partnerships for the Goals
 
-## License
+## Environment Variables
 
-MIT License - see [LICENSE](LICENSE) for details.
+Create a `.env` file in the root directory:
+
+```env
+# Database
+DATABASE_URL=postgres://user:password@host:port/database
+DB_SSL_MODE=require
+
+# API
+PORT=3001
+VITE_API_URL=http://localhost:3001
+
+# WalletConnect (optional)
+VITE_WALLETCONNECT_PROJECT_ID=your_project_id
+
+# Supabase (optional)
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+
+# Smart Contracts (for frontend)
+VITE_LOAN_CONTRACT_ADDRESS=0x...
+VITE_LENDING_CONTRACT_ADDRESS=0x...
+VITE_LITERACY_BADGE_CONTRACT_ADDRESS=0x...
+VITE_USDC_CONTRACT_ADDRESS=0x...
+```
+
+## API Endpoints
+
+### Loans
+- `GET /api/loans` - Get all active loans
+- `GET /api/loans/:id` - Get loan by ID
+- `POST /api/applications` - Submit loan application
+- `GET /api/applications?address=` - Get applications by address
+
+### Investments
+- `POST /api/investments` - Create investment
+- `GET /api/investments?address=` - Get investments by address
+
+### User Profile
+- `GET /api/profile/:address` - Get user profile
+- `POST /api/profile` - Create/update profile
+
+### Quiz Progress
+- `GET /api/quiz-progress?address=` - Get quiz progress by address
+- `POST /api/quiz-progress` - Save quiz progress
+
+## Deployment
+
+### Frontend (Vercel/Netlify)
+```bash
+npm run build
+```
+
+### Backend (Railway/Render/DigitalOcean)
+```bash
+npm run server
+```
+
+### Smart Contracts
+```bash
+cd contracts
+npm run compile
+npm run deploy:amoy  # Deploy to Polygon Amoy testnet
+```
 
 ## Contributing
 
 Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) first.
 
-## Acknowledgments
+## License
 
-- Built with [wagmi](https://wagmi.sh/) and [viem](https://viem.sh/)
-- Smart contracts use [OpenZeppelin](https://openzeppelin.com/) contracts
-- Database hosted on [Aiven](https://aiven.io/)
+MIT License - see [LICENSE](LICENSE) for details.
