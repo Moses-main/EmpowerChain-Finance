@@ -1,17 +1,23 @@
 import { useState } from 'react'
-import { Menu, X, Wallet, ChevronDown } from 'lucide-react'
+import { Menu, X, Wallet, ChevronDown, AlertTriangle } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi'
+import { polygon, polygonAmoy } from 'wagmi/chains'
+
+const SUPPORTED_CHAIN_IDS = [polygon.id, polygonAmoy.id]
+const RECOMMENDED_CHAIN_ID = polygonAmoy.id
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showWalletMenu, setShowWalletMenu] = useState(false)
   const location = useLocation()
-  const { address, isConnected } = useAccount()
-  const { connect, connectors } = useConnect()
+  const { address, isConnected, chainId } = useAccount()
+  const { connect, connectors, isPending } = useConnect()
   const { disconnect } = useDisconnect()
+  const { switchChain, isPending: isSwitchingNetwork } = useSwitchChain()
 
   const isActive = (path: string) => location.pathname === path
+  const isWrongNetwork = Boolean(isConnected && chainId && !SUPPORTED_CHAIN_IDS.includes(chainId))
 
   const navLinks = [
     { label: 'Home', path: '/' },
@@ -26,6 +32,10 @@ const Header = () => {
   const handleConnect = (connector: any) => {
     connect({ connector })
     setShowWalletMenu(false)
+  }
+
+  const handleSwitchToRecommendedChain = () => {
+    switchChain({ chainId: RECOMMENDED_CHAIN_ID })
   }
 
   return (
@@ -70,7 +80,17 @@ const Header = () => {
                   <ChevronDown className="w-3 h-3" />
                 </button>
                 {showWalletMenu && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-lg border shadow-lg py-1" style={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+                  <div className="absolute right-0 mt-2 w-52 rounded-lg border shadow-lg py-1" style={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+                    {isWrongNetwork && (
+                      <button
+                        onClick={handleSwitchToRecommendedChain}
+                        disabled={isSwitchingNetwork}
+                        className="w-full px-4 py-2 text-sm text-left transition-colors"
+                        style={{ color: 'hsl(var(--primary))' }}
+                      >
+                        {isSwitchingNetwork ? 'Switching network...' : 'Switch to Polygon Amoy'}
+                      </button>
+                    )}
                     <button
                       onClick={() => { disconnect(); setShowWalletMenu(false) }}
                       className="w-full px-4 py-2 text-sm text-left hover:bg-opacity-50"
@@ -87,8 +107,9 @@ const Header = () => {
                   onClick={() => setShowWalletMenu(!showWalletMenu)}
                   className="px-4 py-2 text-sm font-medium rounded-lg text-white transition-all duration-200"
                   style={{ backgroundColor: 'hsl(var(--primary))' }}
+                  disabled={isPending}
                 >
-                  Connect Wallet
+                  {isPending ? 'Connecting...' : 'Connect Wallet'}
                 </button>
                 {showWalletMenu && (
                   <div className="absolute right-0 mt-2 w-56 rounded-lg border shadow-lg py-1" style={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
@@ -119,6 +140,25 @@ const Header = () => {
           </button>
         </div>
       </div>
+
+      {isWrongNetwork && (
+        <div className="border-t" style={{ borderColor: 'hsl(var(--border))', backgroundColor: '#fff7ed' }}>
+          <div className="container-wide py-2.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm" style={{ color: '#9a3412' }}>
+              <AlertTriangle className="w-4 h-4" />
+              <span>Wrong network detected. Please switch to Polygon Amoy for full app functionality.</span>
+            </div>
+            <button
+              onClick={handleSwitchToRecommendedChain}
+              disabled={isSwitchingNetwork}
+              className="px-3 py-1.5 rounded-md text-sm font-medium text-white w-fit"
+              style={{ backgroundColor: 'hsl(var(--primary))' }}
+            >
+              {isSwitchingNetwork ? 'Switching...' : 'Switch network'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {mobileMenuOpen && (
         <div className="md:hidden border-t" style={{ borderColor: 'hsl(var(--border))' }}>

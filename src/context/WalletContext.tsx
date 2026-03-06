@@ -1,9 +1,20 @@
-import { WagmiProvider, createConfig, http, injected } from 'wagmi'
+import { WagmiProvider, createConfig, http } from 'wagmi'
+import { injected, coinbaseWallet, walletConnect } from 'wagmi/connectors'
 import { mainnet, polygon, polygonAmoy } from 'wagmi/chains'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useMemo } from 'react'
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi'
+
+const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
+
+const connectors = [
+  injected(),
+  coinbaseWallet({ appName: 'EmpowerChain Finance' }),
+  ...(walletConnectProjectId
+    ? [walletConnect({ projectId: walletConnectProjectId, showQrModal: true })]
+    : []),
+]
 
 const config = createConfig({
   chains: [mainnet, polygon, polygonAmoy],
@@ -12,9 +23,7 @@ const config = createConfig({
     [polygon.id]: http(),
     [polygonAmoy.id]: http(),
   },
-  connectors: [
-    injected(),
-  ],
+  connectors,
 })
 
 const queryClient = new QueryClient()
@@ -28,24 +37,26 @@ interface WalletContextType {
   disconnect: () => void
   switchNetwork: (chainId: number) => void
   supportedChains: typeof config.chains
+  isSupportedNetwork: boolean
+  recommendedChainId: number
 }
 
 const WalletContext = createContext<WalletContextType | null>(null)
 
 function WalletInner({ children }: { children: ReactNode }) {
   const { address, isConnected, chainId } = useAccount()
-  const { connect, connectors, isPending: isConnecting } = useConnect()
+  const { connect, connectors: availableConnectors, isPending: isConnecting } = useConnect()
   const { disconnect } = useDisconnect()
   const { switchChain } = useSwitchChain()
-  const [hasTriggeredConnect, setHasTriggeredConnect] = useState(false)
+
+  const recommendedChainId = polygonAmoy.id
+  const supportedChainIds = useMemo(() => config.chains.map((chain) => chain.id), [])
+  const isSupportedNetwork = !chainId || supportedChainIds.includes(chainId)
 
   const handleConnect = () => {
-    if (!hasTriggeredConnect) {
-      const connector = connectors.find(c => c.type === 'injected') || connectors[0]
-      if (connector) {
-        connect({ connector })
-        setHasTriggeredConnect(true)
-      }
+    const connector = availableConnectors.find((c) => c.type === 'injected') || availableConnectors[0]
+    if (connector) {
+      connect({ connector })
     }
   }
 
@@ -64,6 +75,8 @@ function WalletInner({ children }: { children: ReactNode }) {
         disconnect,
         switchNetwork: handleSwitchNetwork,
         supportedChains: config.chains,
+        isSupportedNetwork,
+        recommendedChainId,
       }}
     >
       {children}
